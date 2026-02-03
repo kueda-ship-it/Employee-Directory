@@ -12,10 +12,7 @@ interface AddEmployeeModalProps {
 
 export function AddEmployeeModal({ isOpen, onClose, onSubmit, columns, initialData }: AddEmployeeModalProps) {
     const [formData, setFormData] = useState<Record<string, any>>({});
-    const visibleColumns = columns.filter(c => c.isVisible); // Show only visible or all? Maybe all for editing. Let's show visible for now, or all. Usually all defined columns should be editable.
-    // Actually, if I hide a column, I might still want to edit it?
-    // Let's stick to showing only visible ones to avoid clutter, or filter by 'isDeleted'? 
-    // For now, I'll show all columns that are defined in the schema.
+    // Show all columns for editing
     const formColumns = columns;
 
     useEffect(() => {

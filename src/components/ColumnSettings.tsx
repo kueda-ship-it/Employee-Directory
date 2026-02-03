@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Column, ColumnType } from '../db';
+import type { Column } from '../db';
 import { Modal } from './Modal';
 import { Plus, Trash2, Eye, EyeOff, Edit2, Check, X } from 'lucide-react';
 

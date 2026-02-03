@@ -3,7 +3,7 @@ import { db, seedDatabase } from './db';
 import { Sidebar } from './components/Sidebar';
 import type { SidebarItem } from './components/Sidebar';
 import { DirectoryView } from './components/DirectoryView';
-import { TeamsView } from './components/TeamsView';
+// import { TeamsView } from './components/TeamsView';
 import { Settings, Users, LayoutDashboard, LogOut } from 'lucide-react';
 import { supabase } from './lib/supabase'; // Corrected Supabase import path
 
@@ -69,6 +69,7 @@ function App() {
     });
   }, []);
 
+  /*
   const handleAddTeam = async () => {
     const teamName = prompt('チーム名を入力してください:');
     if (teamName) {
@@ -77,6 +78,7 @@ function App() {
       fetchTeams();
     }
   };
+  */
 
   // Construct Sidebar Items
   // Teams are hidden for "Roster Only" mode
@@ -152,13 +154,7 @@ function App() {
 
       <main className="flex-1 ml-[72px] p-10">
         <div className="max-w-[1600px] mx-auto">
-          {activeView === 'teams' && (
-            <TeamsView
-              selectedTeamId={selectedTeamId}
-              teams={teams}
-              setTeams={setTeams}
-            />
-          )}
+          {/* TeamsView removed for roster-only mode */}
           {activeView === 'directory' && <DirectoryView />}
           {activeView === 'settings' && (
             <div className="flex flex-col items-center justify-center py-40 text-slate-300">

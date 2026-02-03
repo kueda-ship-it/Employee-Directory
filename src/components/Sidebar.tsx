@@ -21,10 +21,8 @@ interface SidebarProps {
     items: SidebarItem[];
     activeItemId: string;
     onItemClick: (itemId: string) => void;
-    position?: 'left' | 'right';
     leftOffset?: number;
     width?: number;
-    hoverWidth?: number;
     showLabels?: 'always' | 'hover' | 'never';
     logo?: {
         icon: LucideIcon;
@@ -40,10 +38,8 @@ export function Sidebar({
     items,
     activeItemId,
     onItemClick,
-    position = 'left',
     leftOffset = 0,
     width = 280,
-    hoverWidth,
     showLabels = 'always',
     logo,
     footer,

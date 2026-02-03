@@ -4,7 +4,7 @@ import type { Employee, Column } from '../db';
 import { DataTable } from './DataTable';
 import { AddEmployeeModal } from './AddEmployeeModal';
 import { ColumnSettings } from './ColumnSettings';
-import { Settings, UserPlus, FileSpreadsheet, Upload, RotateCcw, Search, Download, Cloud } from 'lucide-react';
+import { Settings, UserPlus, Upload, RotateCcw, Search, Download, Cloud } from 'lucide-react';
 import Papa from 'papaparse';
 import { calculateLengthOfService } from '../lib/dateUtils';
 

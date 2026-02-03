@@ -31,7 +31,7 @@ class DepartmentDatabase extends Dexie {
 
 export const db = new DepartmentDatabase();
 
-export const INITIAL_COLUMNS_MAP = [
+export const INITIAL_COLUMNS_MAP: { key: string; label: string; type: ColumnType }[] = [
     { key: "No.", label: "No.", type: "text" },
     { key: "Name", label: "名前", type: "text" },
     { key: "Employee Identification", label: "従業員識別", type: "text" },
