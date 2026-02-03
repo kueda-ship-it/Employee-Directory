@@ -1,171 +1,94 @@
-import { useEffect, useState } from 'react';
-import { db, seedDatabase } from './db';
-import { Sidebar } from './components/Sidebar';
-import type { SidebarItem } from './components/Sidebar';
-import { DirectoryView } from './components/DirectoryView';
-// import { TeamsView } from './components/TeamsView';
-import { Settings, Users, LayoutDashboard, LogOut } from 'lucide-react';
-import { supabase } from './lib/supabase'; // Corrected Supabase import path
+import { useState } from 'react';
+import './styles/style.css';
+import { TeamsSidebar } from './components/Sidebar/TeamsSidebar';
+import { RightSidebar } from './components/Sidebar/RightSidebar';
+import { ThreadList } from './components/Feed/ThreadList';
+import { PostForm } from './components/Feed/PostForm';
+import { Login } from './components/Login';
+import { useAuth } from './hooks/useAuth';
+import { useThreads } from './hooks/useSupabase';
 
 function App() {
-  const [activeView, setActiveView] = useState<'teams' | 'directory' | 'settings'>('directory');
-  const [selectedTeamId, setSelectedTeamId] = useState('all');
-  // Initialize with the default "All Teams" item
-  const [teams, setTeams] = useState<{ id: string; name: string; icon: string; }[]>([
-    { id: 'all', name: 'ALL Teams', icon: '📋' }
-  ]);
+  const { user, profile, loading: authLoading } = useAuth();
+  const [currentTeamId, setCurrentTeamId] = useState<number | null>(null);
+  const { threads, loading: threadsLoading, error: threadsError, refetch } = useThreads(currentTeamId);
 
-  // Define fetchTeams here so it's accessible by handleAddTeam and useEffect
-  const fetchTeams = async () => {
-    console.log("Fetching teams...");
-    const { data, error } = await supabase.from('teams').select('*').order('created_at');
-    if (error) {
-      console.error("Error fetching teams:", error);
-      // alert("チームデータの取得に失敗しました: " + error.message);
-      return;
-    }
-    if (data) {
-      console.log("Teams fetched:", data);
-      // Add 'all' team at the beginning
-      const allTeam = { id: 'all', name: 'ALL Teams', icon: '📋' };
-      setTeams([allTeam, ...data.map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        icon: t.icon || '📋'
-      }))]);
-    } else {
-      console.log("No teams found");
-    }
-  };
+  if (authLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'var(--bg-primary)'
+      }}>
+        <div style={{ color: 'var(--text-main)' }}>Loading...</div>
+      </div>
+    );
+  }
 
-  // Fetch teams from Supabase on mount and subscribe to changes
-  useEffect(() => {
-    fetchTeams(); // Initial fetch
-
-    const subscription = supabase
-      .channel('teams_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeams)
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []); // Empty dependency array means this runs once on mount
-
-  // Fetch messages for selected team
-  useEffect(() => {
-    if (selectedTeamId === 'all') return;
-
-    const fetchMessages = async () => {
-      // Use mock data for now or fetch actual messages if you want to go full generic
-      // const { data } = await supabase.from('messages').eq('team_id', selectedTeamId).select('*');
-    };
-    fetchMessages();
-  }, [selectedTeamId]);
-
-  useEffect(() => {
-    db.columns.count().then(count => {
-      if (count === 0) seedDatabase();
-    });
-  }, []);
-
-  /*
-  const handleAddTeam = async () => {
-    const teamName = prompt('チーム名を入力してください:');
-    if (teamName) {
-      await supabase.from('teams').insert([{ name: teamName, icon: '👥' }]);
-      // fetchTeams will be called by realtime subscription, but we can call it manually too
-      fetchTeams();
-    }
-  };
-  */
-
-  // Construct Sidebar Items
-  // Teams are hidden for "Roster Only" mode
-  /*
-  const teamItems: SidebarItem[] = teams.map(team => ({
-    id: team.id,
-    label: team.name,
-    icon: team.icon,
-    // Add sub-items only if this team is selected and we are in teams view
-    subItems: (activeView === 'teams' && selectedTeamId === team.id) ? [
-      { id: 'general', label: '一般', icon: '#', onClick: () => console.log('General') },
-      { id: 'unfinished', label: '未完了', icon: '#', badge: 12, onClick: () => console.log('Unfinished') },
-      { id: 'self', label: '自分宛て', icon: '#', badge: 0, onClick: () => console.log('Self') },
-      { id: 'members', label: 'メンバー一覧', icon: Users, onClick: () => console.log('Members') },
-      { id: 'settings', label: '設定', icon: Settings, onClick: () => console.log('Settings') },
-    ] : undefined
-  }));
-  */
-
-  // App Navigation at the bottom
-  const navItems: SidebarItem[] = [
-    { id: 'directory', label: 'Employee List', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ];
-
-  const allItems = [...navItems];
-
-  const handleSidebarClick = (id: string) => {
-    // Check if it's a team id
-    const isTeam = teams.some(t => t.id === id);
-    if (isTeam && false) { // Disabled team clicking
-      setActiveView('teams');
-      setSelectedTeamId(id);
-    } else {
-      setActiveView(id as any);
-      // Keep selectedTeamId as is, or reset? Let's keep it.
-    }
-  };
+  if (!user) {
+    return <Login />;
+  }
 
   return (
-    <div className="min-h-screen bg-[#11100F] flex">
-      <Sidebar
-        items={allItems}
-        activeItemId={activeView === 'teams' ? selectedTeamId : activeView}
-        onItemClick={handleSidebarClick}
-        width={72}
-        showLabels="hover"
-        // onAddClick={handleAddTeam} // Removed Add Team button
-        // addButtonLabel="チームを追加"
-        logo={{
-          icon: LayoutDashboard,
-          title: 'Prograde',
-          subtitle: 'Nova Dashboard'
-        }}
-        footer={
-          <div>
-            <div className="bg-[#2B2D31] p-2 rounded-xl flex items-center gap-3 overflow-hidden transition-all duration-300 group-hover:p-4 group-hover:rounded-[1.5rem] border border-slate-800">
-              <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-sm flex-shrink-0">
-                KU
-              </div>
-              <div className="flex-1 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                <div className="font-black text-slate-200 text-xs truncate">K. Ueda</div>
-                <div className="text-[10px] font-bold text-slate-500 truncate">Administrator</div>
-              </div>
-            </div>
-            <button className="w-full mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-red-500 font-black text-xs transition-colors p-2 overflow-hidden">
-              <LogOut className="w-4 h-4 flex-shrink-0" />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Sign Out</span>
-            </button>
-          </div>
-        }
-      />
-
-      <main className="flex-1 ml-[72px] p-10">
-        <div className="max-w-[1600px] mx-auto">
-          {/* TeamsView removed for roster-only mode */}
-          {activeView === 'directory' && <DirectoryView />}
-          {activeView === 'settings' && (
-            <div className="flex flex-col items-center justify-center py-40 text-slate-300">
-              <Settings className="w-16 h-16 mb-4 animate-[spin_8s_linear_infinite]" />
-              <h2 className="text-2xl font-black tracking-tighter">System Settings</h2>
-              <p className="font-bold text-sm mt-2 uppercase tracking-widest text-slate-400">Under Construction</p>
-            </div>
-          )}
+    <>
+      <header>
+        <div className="logo">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="var(--accent)" />
+            <path d="M16 8C11.5817 8 8 11.134 8 15C8 17.13 9.1165 19.035 10.875 20.25L10 24L14.25 22.125C14.8125 22.25 15.4062 22.3125 16 22.3125C20.4183 22.3125 24 19.1785 24 15.3125C24 11.4465 20.4183 8.3125 16 8.3125V8Z" fill="white" />
+            <circle cx="16" cy="14" r="3" fill="var(--bg-dark)" />
+          </svg>
+          <span>Contact Team Manager</span>
         </div>
-      </main>
-    </div>
+        <div className="header-search-container">
+          <input type="text" className="input-field search-input" placeholder="検索 (CTRL+E)" />
+        </div>
+        <div className="user-profile">
+          <div className="avatar" style={{ width: '28px', height: '28px' }}>
+            {profile?.avatar_url ? <img src={profile.avatar_url} alt="" /> : (profile?.display_name || user.email)?.[0]}
+          </div>
+          <div>
+            <span className="username" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600 }}>
+              {profile?.display_name || user.email}
+            </span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--accent)' }}>{profile?.role || 'User'}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="main-wrapper">
+        <aside className="teams-sidebar">
+          <div className="teams-list">
+            <TeamsSidebar
+              currentTeamId={currentTeamId}
+              onSelectTeam={(id) => setCurrentTeamId(id)}
+            />
+          </div>
+        </aside>
+
+        <div className="dashboard-layout">
+          <main className="main-feed-area">
+            <div className="feed-list">
+              <ThreadList
+                currentTeamId={currentTeamId}
+                threadsData={{ threads, loading: threadsLoading, error: threadsError, refetch }}
+              />
+            </div>
+            <PostForm
+              teamId={currentTeamId}
+              onSuccess={() => refetch(true)}
+            />
+          </main>
+
+          <RightSidebar
+            currentTeamId={currentTeamId}
+            threadsData={{ threads, loading: threadsLoading, error: threadsError, refetch }}
+          />
+        </div>
+      </div>
+    </>
   );
 }
 
